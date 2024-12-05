@@ -53,11 +53,6 @@ RUN pip3 install --no-cache-dir --upgrade pip\
     matplotlib \
     rosbags     
 
-
-RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list' \
-    && wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add - \
-    && apt-get update && apt-get install -y ignition-fortress
-
 RUN apt-get update && apt-get install -y --no-install-recommends\
     ros-$ROS_DISTRO-rqt \
     ros-$ROS_DISTRO-rqt-common-plugins \
@@ -67,7 +62,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends\
     ros-$ROS_DISTRO-rqt-tf-tree \
     ros-$ROS_DISTRO-image-transport-plugins \
     ros-$ROS_DISTRO-compressed-image-transport \
-    # ros-$ROS_DISTRO-clearpath-desktop \
     ros-$ROS_DISTRO-cv-bridge \
     ros-$ROS_DISTRO-rosbag2-py \
     ros-$ROS_DISTRO-usb-cam \
@@ -79,12 +73,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends\
     ros-$ROS_DISTRO-ign-ros2-control \
     ros-$ROS_DISTRO-moveit \
     ros-$ROS_DISTRO-moveit-servo \
+    ros-$ROS_DISTRO-pilz-industrial-motion-planner \
     ros-$ROS_DISTRO-ros-ign-bridge \
     ros-$ROS_DISTRO-ros-ign-gazebo \
     ros-$ROS_DISTRO-ament-clang-format \
     ros-$ROS_DISTRO-moveit-visual-tools \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# niceness permissions (for ur driver use without Prempt-RT)
+RUN echo "* - nice -15" >> /etc/security/limits.conf
 
 RUN mkdir -p /dev_ws/src
 

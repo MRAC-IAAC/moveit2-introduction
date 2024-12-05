@@ -33,90 +33,57 @@ class MotionSequenceClient(Node):
             "wrist_2_joint",
             "wrist_3_joint",
         ]
-        start_state.joint_state.position = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+        start_state.joint_state.position = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]
 
-        # First MotionSequenceItem
-        item = MotionSequenceItem()
-        item.blend_radius = 0.1
-        item.req.group_name = "ur_manipulator"  # Set your planning group
-        item.req.planner_id = "PTP"  # Set the planner type
-        item.req.allowed_planning_time = 5.0  # Allow 5 seconds for planning
-        item.req.max_velocity_scaling_factor = 0.1
-        item.req.max_acceleration_scaling_factor = 0.1
-        item.req.start_state = start_state
+        # Define target poses
+        target_poses = [
+            Pose(
+                position=Point(x=0.6, y=0.0, z=0.5),
+                orientation=Quaternion(x=0.0, y=0.7071067811865475, z=0.0, w=0.7071067811865476),
+            ),
+            Pose(
+                position=Point(x=0.6, y=0.3, z=0.5),
+                orientation=Quaternion(x=0.5, y=0.5, z=0.5, w=0.5),
+            ),
+            Pose(
+                position=Point(x=0.6, y=-0.3, z=0.5),
+                orientation=Quaternion(x=0.0, y=0.7071067811865475, z=0.0, w=0.7071067811865476),
+            ),
+        ]
 
-        # Create first target pose (Cartesian goal)
-        target_pose = PoseStamped()
-        target_pose.header.frame_id = "base_link"  # Set the frame
-        target_pose.pose.position = Point(x=0.6, y=-0.3, z=0.5)  # Set position
-        target_pose.pose.orientation = Quaternion(
-            x=0.0, y=0.7071067811865475, z=0.0, w=0.7071067811865476
-        )  # Set orientation
+        for idx, target_pose in enumerate(target_poses):
+            # Create a new MotionSequenceItem
+            item = MotionSequenceItem()
+            item.blend_radius = 0.1 if idx < len(target_poses) - 1 else 0.0  # Last item blend_radius must be 0
+            item.req.group_name = "ur_manipulator"
+            item.req.planner_id = "PTP"
+            item.req.allowed_planning_time = 5.0
+            item.req.max_velocity_scaling_factor = 0.1
+            item.req.max_acceleration_scaling_factor = 0.1
 
-        # Create Constraints and append PositionConstraint and OrientationConstraint
-        constraints = Constraints()
+            # Create Constraints and append PositionConstraint and OrientationConstraint
+            constraints = Constraints()
 
-        position_constraint = self.create_position_constraint(
-            position=[target_pose.pose.position.x, target_pose.pose.position.y, target_pose.pose.position.z]
-        )
-        constraints.position_constraints.append(position_constraint)
+            position_constraint = self.create_position_constraint(
+                position=[target_pose.position.x, target_pose.position.y, target_pose.position.z]
+            )
+            constraints.position_constraints.append(position_constraint)
 
-        orientation_constraint = self.create_orientation_constraint(
-            orientation=[
-                target_pose.pose.orientation.x,
-                target_pose.pose.orientation.y,
-                target_pose.pose.orientation.z,
-                target_pose.pose.orientation.w,
-            ]
-        )
-        constraints.orientation_constraints.append(orientation_constraint)
+            orientation_constraint = self.create_orientation_constraint(
+                orientation=[
+                    target_pose.orientation.x,
+                    target_pose.orientation.y,
+                    target_pose.orientation.z,
+                    target_pose.orientation.w,
+                ]
+            )
+            constraints.orientation_constraints.append(orientation_constraint)
 
-        # Append constraints to the MotionSequenceItem goal_constraints
-        item.req.goal_constraints.append(constraints)
+            # Append constraints to the MotionSequenceItem goal_constraints
+            item.req.goal_constraints.append(constraints)
 
-        # Add item to the sequence request
-        sequence_request.items.append(item)
-
-        # --- Add more MotionSequenceItems for the other waypoints ---
-        # Last item blend_radius must be 0!
-        last_item = MotionSequenceItem()
-        last_item.blend_radius = 0.0  # Set the last item blend_radius to 0
-        last_item.req.group_name = "ur_manipulator"
-        last_item.req.planner_id = "PTP"
-        last_item.req.allowed_planning_time = 2.0
-        last_item.req.max_velocity_scaling_factor = 0.1
-        last_item.req.max_acceleration_scaling_factor = 0.1
-        # Create last target pose (Cartesian goal)
-        last_target_pose = PoseStamped()
-        last_target_pose.header.frame_id = "base_link"
-        last_target_pose.pose.position = Point(x=0.6, y=0.3, z=0.0)
-        last_target_pose.pose.orientation = Quaternion(x=0.5, y=0.5, z=0.5, w=0.5)
-
-        # Create Constraints and append PositionConstraint and OrientationConstraint for the last item
-        last_constraints = Constraints()
-        last_position_constraint = self.create_position_constraint(
-            position=[
-                last_target_pose.pose.position.x,
-                last_target_pose.pose.position.y,
-                last_target_pose.pose.position.z,
-            ]
-        )
-        last_constraints.position_constraints.append(last_position_constraint)
-
-        last_orientation_constraint = self.create_orientation_constraint(
-            orientation=[
-                last_target_pose.pose.orientation.x,
-                last_target_pose.pose.orientation.y,
-                last_target_pose.pose.orientation.z,
-                last_target_pose.pose.orientation.w,
-            ]
-        )
-        last_constraints.orientation_constraints.append(last_orientation_constraint)
-
-        # Append the constraints for the last item
-        last_item.req.goal_constraints.append(last_constraints)
-
-        sequence_request.items.append(last_item)
+            # Add the item to the sequence request
+            sequence_request.items.append(item)
 
         return sequence_request
 
@@ -141,28 +108,10 @@ class MotionSequenceClient(Node):
 
         # Send the goal asynchronously
         self.get_logger().info("Sending motion sequence goal...")
-        send_goal_future = self._action_client.send_goal_async(goal_msg, feedback_callback=self.feedback_callback)
+        send_goal_future = self._action_client.send_goal_async(goal_msg)
 
         # Wait for result and handle response
         rclpy.spin_until_future_complete(self, send_goal_future)
-
-        # Retrieve the result using get_result
-        goal_handle = send_goal_future.result()
-        print(goal_handle)
-        if goal_handle:
-            result = goal_handle.get_result()
-            if result:
-                self.get_logger().info(f"Action result: {result}")
-            else:
-                self.get_logger().error("Action failed to return result.")
-        else:
-            self.get_logger().error("Goal was rejected.")
-
-    def feedback_callback(self, feedback_msg):
-        # Log feedback from the action server
-        self.get_logger().info(f"Feedback: {feedback_msg.feedback.state}")
-        if feedback_msg:
-            self.get_logger().info(f"Feedback state: {feedback_msg.feedback.state}, message: {feedback_msg.feedback}")
 
     def create_position_constraint(
         self,
