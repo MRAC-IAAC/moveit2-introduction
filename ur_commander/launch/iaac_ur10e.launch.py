@@ -16,13 +16,13 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             "initial_joint_controller",
-            default_value="joint_trajectory_controller",
+            default_value="scaled_joint_trajectory_controller",
             description="Specify the joint controller to use",
             choices=[
-                # "scaled_joint_trajectory_controller",
+                "scaled_joint_trajectory_controller",
                 "joint_trajectory_controller",
-                #     "forward_velocity_controller",
-                #     "forward_position_controller",
+                "forward_velocity_controller",
+                "forward_position_controller",
             ],
         ),
         DeclareLaunchArgument(
