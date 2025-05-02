@@ -66,6 +66,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends\
     ros-$ROS_DISTRO-rosbag2-py \
     ros-$ROS_DISTRO-usb-cam \
     ros-$ROS_DISTRO-ur \
+    ros-$ROS_DISTRO-ur-msgs \
+    ros-$ROS_DISTRO-ur-client-library \
+    ros-$ROS_DISTRO-ur-description \
+    ros-$ROS_DISTRO-ros2-control \
+    ros-$ROS_DISTRO-ros2-controllers \
+    ros-$ROS_DISTRO-realtime-tools \
+    ros-$ROS_DISTRO-kinematics-interface \
+    ros-$ROS_DISTRO-control-msgs \
     ros-$ROS_DISTRO-rviz2 \
     ros-$ROS_DISTRO-rmw-cyclonedds-cpp \
     ros-$ROS_DISTRO-ros-testing \
