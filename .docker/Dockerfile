@@ -24,7 +24,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends\
     python3-colcon-common-extensions \
     python3-colcon-mixin \
     python3-flake8 \
-    python3-setuptools \
     python3-vcstool \
     freeglut3-dev \
     lsb-release gnupg \
@@ -51,7 +50,7 @@ RUN pip3 install --no-cache-dir --upgrade pip\
     pydantic==1.10.14 \
     panda \
     matplotlib \
-    setuptools \
+    setuptools==58.3.0 \
     rosbags     
 
 RUN apt-get update && apt-get install -y --no-install-recommends\
@@ -126,11 +125,16 @@ WORKDIR /dev_ws
 
 COPY . /dev_ws/src
 
-RUN apt-get update && rosdep install --ignore-src --from-paths src -y\
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# RUN pip3 install setuptools==58.3.0
+
+# RUN apt-get update && rosdep install --from-paths src --ignore-src --skip-keys="azure_kinect_ros_driver" -r -y \
+#     && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+FROM build AS bash
 
 RUN ["/bin/bash", "-c", "source /opt/ros/$ROS_DISTRO/setup.bash && \
-     colcon build --merge-install --symlink-install --cmake-args '-DCMAKE_BUILD_TYPE=Release'"]
+     colcon build --merge-install --symlink-install --cmake-args '-DCMAKE_BUILD_TYPE=Release' --packages-skip azure_kinect_ros_driver easy_handeye2 && \
+     colcon build --merge-install --packages-select azure_kinect_ros_driver easy_handeye2"]
 
 
 RUN ["/bin/bash", "-c", "cp /dev_ws/src/.docker/setup.bash /dev_ws/setup.bash && chmod 777 /dev_ws/setup.bash"]
